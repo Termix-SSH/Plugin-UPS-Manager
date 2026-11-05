@@ -1,0 +1,117 @@
+{
+  "version": 1,
+  "tables": {
+    "sources": {
+      "columns": {
+        "id": {
+          "type": "id",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "hostId": {
+          "type": "refHost",
+          "notNull": true
+        },
+        "userId": {
+          "type": "refUser",
+          "length": 255,
+          "notNull": true
+        },
+        "backend": {
+          "type": "varchar",
+          "length": 16,
+          "notNull": true
+        },
+        "label": {
+          "type": "varchar",
+          "length": 80,
+          "notNull": true
+        },
+        "target": {
+          "type": "varchar",
+          "length": 255,
+          "notNull": true,
+          "defaultValue": ""
+        },
+        "snmpVersion": {
+          "type": "varchar",
+          "length": 4,
+          "notNull": true,
+          "defaultValue": "2c"
+        },
+        "secrets": {
+          "type": "text"
+        },
+        "lowCharge": {
+          "type": "integer",
+          "notNull": true,
+          "defaultValue": 30
+        },
+        "lowRuntimeMin": {
+          "type": "integer",
+          "notNull": true,
+          "defaultValue": 5
+        },
+        "alerts": {
+          "type": "boolean",
+          "notNull": true,
+          "defaultValue": true
+        },
+        "enabled": {
+          "type": "boolean",
+          "notNull": true,
+          "defaultValue": true
+        },
+        "createdAt": {
+          "type": "timestamp",
+          "notNull": true,
+          "defaultNow": true
+        }
+      },
+      "indexes": [
+        {
+          "name": "idx_p_ups_manager_sources_host",
+          "columns": [
+            "hostId"
+          ]
+        }
+      ]
+    },
+    "events": {
+      "columns": {
+        "id": {
+          "type": "id",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "sourceId": {
+          "type": "integer",
+          "notNull": true
+        },
+        "at": {
+          "type": "bigint",
+          "notNull": true
+        },
+        "type": {
+          "type": "varchar",
+          "length": 32,
+          "notNull": true
+        },
+        "text": {
+          "type": "varchar",
+          "length": 300,
+          "notNull": true
+        }
+      },
+      "indexes": [
+        {
+          "name": "idx_p_ups_manager_events_source_at",
+          "columns": [
+            "sourceId",
+            "at"
+          ]
+        }
+      ]
+    }
+  }
+}
