@@ -200,10 +200,18 @@
     }
   },
   "operations": {
-    "list": { "title": "List UPS devices" },
-    "status": { "title": "Power status" },
-    "charge": { "title": "Battery charge" },
-    "runtime": { "title": "Runtime left" },
+    "list": {
+      "title": "List UPS devices"
+    },
+    "status": {
+      "title": "Power status"
+    },
+    "charge": {
+      "title": "Battery charge"
+    },
+    "runtime": {
+      "title": "Runtime left"
+    },
     "source": "UPS",
     "sourceHint": "The UPS id. Leave empty for the first one on the host.",
     "selfTest": {
@@ -229,6 +237,10 @@
       "charge": "Charge",
       "load": "Load",
       "backend": "Read with"
+    },
+    "events": {
+      "onBattery": "UPS on battery",
+      "powerRestored": "UPS power restored"
     }
   }
 }

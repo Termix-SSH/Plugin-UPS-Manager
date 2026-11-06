@@ -38,3 +38,20 @@ describe("declared actions", () => {
     }
   });
 });
+
+describe("power events and service", () => {
+  it("declares the battery events and the access service", () => {
+    const ops = (
+      manifest.contributes as {
+        operations: { events: { id: string }[] };
+      }
+    ).operations;
+    expect(ops.events.map((e) => e.id)).toEqual([
+      "ups-manager.on-battery",
+      "ups-manager.power-restored",
+    ]);
+    const provides = (manifest as { provides?: { service: string }[] })
+      .provides;
+    expect(provides?.map((p) => p.service)).toContain("ups-manager.access");
+  });
+});

@@ -31,6 +31,38 @@ export async function activate(ctx: PluginContext) {
     remote,
     service,
   });
+  ctx.services.provide("ups-manager.access", {
+    check: async (hostId: number) => {
+      const rows = (await store.forHost(hostId)).filter((r) => r.enabled);
+      let status: "ok" | "warn" | "fail" | "unknown" = "unknown";
+      let onBattery = false;
+      let chargePct: number | null = null;
+      let runtimeSec: number | null = null;
+      for (const row of rows) {
+        const state = engine.state(row.id);
+        if (!state) continue;
+        if (status === "unknown") status = "ok";
+        if (state.error && !state.reading) status = "fail";
+        const reading = state.reading;
+        if (!reading) continue;
+        if (state.active.has("on-battery")) {
+          onBattery = true;
+          if (status !== "fail") status = "warn";
+        }
+        if (
+          state.active.has("low-battery") ||
+          state.active.has("replace-battery")
+        ) {
+          status = "fail";
+        }
+        if (reading.chargePct !== null)
+          chargePct = Math.min(chargePct ?? 100, reading.chargePct);
+        if (reading.runtimeSec !== null)
+          runtimeSec = Math.min(runtimeSec ?? Infinity, reading.runtimeSec);
+      }
+      return { status, onBattery, chargePct, runtimeSec };
+    },
+  });
   ctx.log.info("UPS Manager routes mounted at /plugin-api/ups-manager");
 }
 
