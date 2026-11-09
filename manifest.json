@@ -91,8 +91,16 @@
           "risk": "read",
           "permission": "use",
           "hostAccess": "connect",
-          "when": { "settings": { "enableUps": true } },
-          "surfaces": { "assistant": true, "mcp": true, "palette": false }
+          "when": {
+            "settings": {
+              "enableUps": true
+            }
+          },
+          "surfaces": {
+            "assistant": true,
+            "mcp": true,
+            "palette": false
+          }
         },
         {
           "id": "ups-manager.status",
@@ -101,8 +109,16 @@
           "risk": "read",
           "permission": "use",
           "hostAccess": "connect",
-          "when": { "settings": { "enableUps": true } },
-          "surfaces": { "assistant": true, "mcp": true, "palette": false }
+          "when": {
+            "settings": {
+              "enableUps": true
+            }
+          },
+          "surfaces": {
+            "assistant": true,
+            "mcp": true,
+            "palette": false
+          }
         },
         {
           "id": "ups-manager.charge",
@@ -111,8 +127,16 @@
           "risk": "read",
           "permission": "use",
           "hostAccess": "connect",
-          "when": { "settings": { "enableUps": true } },
-          "surfaces": { "assistant": true, "mcp": true, "palette": false }
+          "when": {
+            "settings": {
+              "enableUps": true
+            }
+          },
+          "surfaces": {
+            "assistant": true,
+            "mcp": true,
+            "palette": false
+          }
         },
         {
           "id": "ups-manager.runtime",
@@ -121,8 +145,16 @@
           "risk": "read",
           "permission": "use",
           "hostAccess": "connect",
-          "when": { "settings": { "enableUps": true } },
-          "surfaces": { "assistant": true, "mcp": true, "palette": false }
+          "when": {
+            "settings": {
+              "enableUps": true
+            }
+          },
+          "surfaces": {
+            "assistant": true,
+            "mcp": true,
+            "palette": false
+          }
         },
         {
           "id": "ups-manager.self-test",
@@ -141,8 +173,14 @@
               "labelKey": "operations.selfTest.kind",
               "default": "quick",
               "options": [
-                { "value": "quick", "labelKey": "operations.selfTest.quick" },
-                { "value": "deep", "labelKey": "operations.selfTest.deep" }
+                {
+                  "value": "quick",
+                  "labelKey": "operations.selfTest.quick"
+                },
+                {
+                  "value": "deep",
+                  "labelKey": "operations.selfTest.deep"
+                }
               ]
             },
             {
@@ -152,8 +190,15 @@
               "descriptionKey": "operations.sourceHint"
             }
           ],
-          "when": { "settings": { "enableUps": true } },
-          "surfaces": { "assistant": true, "mcp": true }
+          "when": {
+            "settings": {
+              "enableUps": true
+            }
+          },
+          "surfaces": {
+            "assistant": true,
+            "mcp": true
+          }
         },
         {
           "id": "ups-manager.beeper",
@@ -172,9 +217,18 @@
               "labelKey": "operations.beeper.mode",
               "default": "mute",
               "options": [
-                { "value": "mute", "labelKey": "operations.beeper.mute" },
-                { "value": "disable", "labelKey": "operations.beeper.disable" },
-                { "value": "enable", "labelKey": "operations.beeper.enable" }
+                {
+                  "value": "mute",
+                  "labelKey": "operations.beeper.mute"
+                },
+                {
+                  "value": "disable",
+                  "labelKey": "operations.beeper.disable"
+                },
+                {
+                  "value": "enable",
+                  "labelKey": "operations.beeper.enable"
+                }
               ]
             },
             {
@@ -184,8 +238,15 @@
               "descriptionKey": "operations.sourceHint"
             }
           ],
-          "when": { "settings": { "enableUps": true } },
-          "surfaces": { "assistant": true, "mcp": true }
+          "when": {
+            "settings": {
+              "enableUps": true
+            }
+          },
+          "surfaces": {
+            "assistant": true,
+            "mcp": true
+          }
         },
         {
           "id": "ups-manager.calibrate",
@@ -206,7 +267,11 @@
               "descriptionKey": "operations.sourceHint"
             }
           ],
-          "when": { "settings": { "enableUps": true } }
+          "when": {
+            "settings": {
+              "enableUps": true
+            }
+          }
         }
       ],
       "resources": [
@@ -235,7 +300,10 @@
               "titleKey": "operations.devices.load",
               "type": "percent"
             },
-            { "key": "backend", "titleKey": "operations.devices.backend" }
+            {
+              "key": "backend",
+              "titleKey": "operations.devices.backend"
+            }
           ]
         }
       ],
@@ -264,9 +332,31 @@
           "kind": "gauge",
           "refreshSec": 60
         }
+      ],
+      "events": [
+        {
+          "id": "ups-manager.on-battery",
+          "titleKey": "operations.events.onBattery",
+          "severity": "critical",
+          "scope": "host"
+        },
+        {
+          "id": "ups-manager.power-restored",
+          "titleKey": "operations.events.powerRestored",
+          "severity": "info",
+          "scope": "host"
+        }
       ]
-    }
+    },
+    "uses": ["homepage.widgets"]
   },
   "locales": "locales",
-  "platforms": ["linux", "win32", "darwin"]
+  "platforms": ["linux", "win32", "darwin"],
+  "provides": [
+    {
+      "service": "ups-manager.access",
+      "version": "1.0.0",
+      "permission": "ups-manager.use"
+    }
+  ]
 }

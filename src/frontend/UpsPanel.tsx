@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BatteryCharging } from "lucide-react";
 import { useToast, useTranslation } from "@termix-ssh/plugin-sdk/frontend";
-import { Segmented, TabStrip, useConfirm } from "@termix-ssh/plugin-sdk/ui";
+import {
+  Segmented,
+  TabStrip,
+  useConfirm,
+  LoadingState,
+} from "@termix-ssh/plugin-sdk/ui";
 import type { SourceInput, SourceView } from "../shared/types";
 import {
   addSource,
@@ -154,9 +159,7 @@ export function UpsPanel({
   if (error)
     return <p className="px-3 py-2 text-xs text-destructive">{error}</p>;
   if (!sources) {
-    return (
-      <p className="p-2 text-xs text-muted-foreground">{t("common.loading")}</p>
-    );
+    return <LoadingState compact label={t("common.loading")} />;
   }
 
   const tabs: Array<{ id: View; label: string; count?: number }> = [
@@ -184,24 +187,26 @@ export function UpsPanel({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <TabStrip
-        tabs={tabs}
-        activeTab={active}
-        onTabChange={(id) => setView(id as View)}
-        trailing={
-          sources.length > 1 ? (
-            <Segmented<string>
-              value={String(selected ?? "")}
-              onChange={(value) => setSelected(Number(value))}
-              options={sources.map((s) => ({
-                value: String(s.id),
-                label: s.label,
-                icon: <BatteryCharging className="size-3" />,
-              }))}
-            />
-          ) : undefined
-        }
-      />
+      <div className="shrink-0 border-b border-border px-1">
+        <TabStrip
+          tabs={tabs}
+          activeTab={active}
+          onTabChange={(id) => setView(id as View)}
+          trailing={
+            sources.length > 1 ? (
+              <Segmented<string>
+                value={String(selected ?? "")}
+                onChange={(value) => setSelected(Number(value))}
+                options={sources.map((s) => ({
+                  value: String(s.id),
+                  label: s.label,
+                  icon: <BatteryCharging className="size-3" />,
+                }))}
+              />
+            ) : undefined
+          }
+        />
+      </div>
       <div className="min-h-0 flex-1 overflow-auto">
         {active === "sources" || !current ? (
           <SourcesView

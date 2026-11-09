@@ -207,8 +207,20 @@ export class Engine {
       );
       const loud = change.on || change.condition === "on-battery";
       if (row.alerts && loud) await this.alert(row, change, text);
+      if (change.condition === "on-battery") await this.emit(row, change.on);
     }
     return state;
+  }
+
+  private async emit(row: SourceRow, onBattery: boolean): Promise<void> {
+    if (typeof this.ctx.operations?.emit !== "function") return;
+    await this.ctx.operations
+      .emit(
+        onBattery ? "ups-manager.on-battery" : "ups-manager.power-restored",
+        { sourceName: row.label },
+        { hostId: row.hostId },
+      )
+      .catch(() => undefined);
   }
 
   private async alert(

@@ -184,3 +184,13 @@ describe("formatting", () => {
     expect(formatRuntime(7200)).toBe("2h");
   });
 });
+
+describe("homepage widget", () => {
+  it("adds a homepage widget and declares the extension point", async () => {
+    rendered = await renderWithApp(plugin, { manifest, locales });
+    expect(rendered.registered.extensions("homepage.widgets")).toEqual([
+      "ups_manager_widget",
+    ]);
+    expect(manifest.contributes.uses).toContain("homepage.widgets");
+  });
+});

@@ -30,6 +30,7 @@ Read the [docs](https://docs.termix.site/plugins/ups-manager) to set it up and u
 - A power event log for every UPS
 - Battery self test, beeper and other NUT commands
 - A dashboard card with every UPS on your hosts
+- Power status, charge and runtime as status tiles
 
 <br />
 

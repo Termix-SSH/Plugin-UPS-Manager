@@ -6,6 +6,7 @@ import { enabled } from "./format";
 import { UpsHostsCard } from "./UpsHostsCard";
 import { UpsManagerCard } from "./UpsManagerCard";
 import { UpsTab } from "./UpsTab";
+import { upsWidget } from "./UpsWidget";
 
 const TAB_ID = "ups-manager";
 
@@ -53,4 +54,5 @@ export function activate(app: TermixApp): void {
       Record<string, unknown>
     >,
   });
+  app.registerExtension("homepage.widgets", upsWidget);
 }
