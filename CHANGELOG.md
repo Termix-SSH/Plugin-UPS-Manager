@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1
+
+### Fixed
+
+- Source editor Test button now matches the Save button size
+
 ## 1.0.0
 
 ### Added
