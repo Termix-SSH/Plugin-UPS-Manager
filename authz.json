@@ -1,0 +1,141 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Termix-SSH/Termix/main/scripts/authz/authz.schema.json",
+  "seed": [
+    {
+      "as": "owner",
+      "method": "POST",
+      "path": "/plugin-api/ups-manager/{{host}}/sources",
+      "body": {
+        "backend": "nut",
+        "label": "authz-own-ups",
+        "target": "ups"
+      },
+      "capture": {
+        "ups-manager.source": "id"
+      }
+    }
+  ],
+  "routes": {
+    "GET /plugin-api/ups-manager/:hostId/detect": {
+      "access": "user",
+      "permission": "ups-manager.use",
+      "resource": {
+        "kind": "host",
+        "min": "connect"
+      }
+    },
+    "GET /plugin-api/ups-manager/:hostId/sources": {
+      "access": "user",
+      "permission": "ups-manager.use",
+      "resource": {
+        "kind": "host",
+        "min": "connect"
+      }
+    },
+    "POST /plugin-api/ups-manager/:hostId/sources": {
+      "access": "user",
+      "permission": "ups-manager.use",
+      "resource": {
+        "kind": "host",
+        "min": "connect"
+      }
+    },
+    "DELETE /plugin-api/ups-manager/:hostId/sources/:id": {
+      "access": "user",
+      "permission": "ups-manager.use",
+      "resource": {
+        "kind": "host",
+        "min": "connect"
+      },
+      "destructive": true,
+      "params": {
+        "id": "ups-manager.source"
+      }
+    },
+    "PUT /plugin-api/ups-manager/:hostId/sources/:id": {
+      "access": "user",
+      "permission": "ups-manager.use",
+      "resource": {
+        "kind": "host",
+        "min": "connect"
+      },
+      "params": {
+        "id": "ups-manager.source"
+      }
+    },
+    "GET /plugin-api/ups-manager/:hostId/sources/:id/commands": {
+      "access": "user",
+      "permission": "ups-manager.use",
+      "resource": {
+        "kind": "host",
+        "min": "connect"
+      },
+      "params": {
+        "id": "ups-manager.source"
+      }
+    },
+    "POST /plugin-api/ups-manager/:hostId/sources/:id/commands": {
+      "access": "user",
+      "permission": "ups-manager.use",
+      "resource": {
+        "kind": "host",
+        "min": "connect"
+      },
+      "params": {
+        "id": "ups-manager.source"
+      }
+    },
+    "GET /plugin-api/ups-manager/:hostId/sources/:id/events": {
+      "access": "user",
+      "permission": "ups-manager.use",
+      "resource": {
+        "kind": "host",
+        "min": "connect"
+      },
+      "params": {
+        "id": "ups-manager.source"
+      }
+    },
+    "GET /plugin-api/ups-manager/:hostId/sources/:id/history": {
+      "access": "user",
+      "permission": "ups-manager.use",
+      "resource": {
+        "kind": "host",
+        "min": "connect"
+      },
+      "params": {
+        "id": "ups-manager.source"
+      }
+    },
+    "GET /plugin-api/ups-manager/:hostId/sources/:id/status": {
+      "access": "user",
+      "permission": "ups-manager.use",
+      "resource": {
+        "kind": "host",
+        "min": "connect"
+      },
+      "params": {
+        "id": "ups-manager.source"
+      }
+    },
+    "POST /plugin-api/ups-manager/:hostId/test-source": {
+      "access": "user",
+      "permission": "ups-manager.use",
+      "resource": {
+        "kind": "host",
+        "min": "connect"
+      }
+    },
+    "GET /plugin-api/ups-manager/summary": {
+      "access": "user",
+      "permission": "ups-manager.use",
+      "resource": {
+        "kind": "host",
+        "min": "connect",
+        "key": "hostId"
+      },
+      "filtered": true,
+      "note": "Lists only what the caller may see"
+    }
+  }
+}
