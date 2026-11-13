@@ -64,8 +64,13 @@ export class Engine {
 
   start(): void {
     this.stops.push(
-      this.ctx.schedule.every(TICK_MS, () => this.tick(), { jitterMs: 5_000 }),
-      this.ctx.schedule.every(FLUSH_MS, () => this.history.flush()),
+      this.ctx.schedule.every(TICK_MS, () => this.tick(), {
+        id: "tick",
+        jitterMs: 5_000,
+      }),
+      this.ctx.schedule.every(FLUSH_MS, () => this.history.flush(), {
+        id: "flush",
+      }),
     );
   }
 
