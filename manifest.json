@@ -1,7 +1,7 @@
 {
   "id": "ups-manager",
   "name": "UPS Manager",
-  "version": "1.0.0",
+  "version": "1.1.0-dev.6",
   "description": "Watch your UPS devices over NUT, apcupsd or SNMP, with history, alerts and self tests.",
   "author": {
     "name": "Termix"

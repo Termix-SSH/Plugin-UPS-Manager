@@ -14,6 +14,65 @@ afterEach(async () => {
 const NOW = 1_800_000_000;
 
 describe("history", () => {
+  it.each([
+    { sources: [] },
+    {
+      sources: {
+        1: {
+          raw: [{ t: NOW, c: "invalid", r: null, l: null, i: null, o: null }],
+          hours: [],
+        },
+      },
+    },
+    {
+      sources: {
+        1: {
+          raw: [],
+          hours: [{ t: NOW, sums: [0, 0, 0, 0, 0], counts: [-1, 0, 0, 0, 0] }],
+        },
+      },
+    },
+  ])(
+    "rejects malformed numerical history without overwriting it: %j",
+    async (payload) => {
+      const dir = await mkdtemp(path.join(os.tmpdir(), "ups-hist-"));
+      dirs.push(dir);
+      const { writeFile, readFile } = await import("node:fs/promises");
+      const original = JSON.stringify(payload);
+      await writeFile(path.join(dir, "history.json"), original);
+      const h = new History(dir, { warn: () => undefined });
+      await h.load();
+      expect(h.error).toContain("could not be loaded");
+      h.add(1, NOW, parseNut(UPSC_ONLINE));
+      await h.flush();
+      expect(await readFile(path.join(dir, "history.json"), "utf8")).toBe(
+        original,
+      );
+    },
+  );
+  it("keeps raw and hourly load history reported-only", () => {
+    const h = new History(null);
+    const r = parseNut(UPSC_ONLINE);
+    h.add(1, NOW, { ...r, loadPct: 10, loadOrigin: "estimated" });
+    h.add(1, NOW + 30, { ...r, loadPct: 20, loadOrigin: "reported" });
+    expect(h.range(1, "24h", NOW + 60).map((p) => p.l)).toEqual([null, 20]);
+    expect(h.range(1, "7d", NOW + 60)[0].l).toBe(20);
+  });
+  it("limits rapid live refreshes to one stored sample every 30 seconds", () => {
+    const h = new History(null);
+    const r = parseNut(UPSC_ONLINE);
+    for (let second = 0; second <= 60; second++) {
+      h.add(1, NOW + second, { ...r, chargePct: second });
+    }
+    const points = h.range(1, "24h", NOW + 60);
+    expect(points.map((p) => p.t)).toEqual([NOW, NOW + 30, NOW + 60]);
+    expect(points.map((p) => p.c)).toEqual([0, 30, 60]);
+    const other = { ...r, chargePct: 90 };
+    h.add(2, NOW + 1, other);
+    expect(h.range(2, "24h", NOW + 60)).toHaveLength(1);
+    expect(h.range(1, "7d", NOW + 60)[0].c).toBe(30);
+  });
+
   it("keeps raw samples for 24h and averages by the hour after", () => {
     const h = new History(null);
     const r = parseNut(UPSC_ONLINE);
@@ -51,7 +110,7 @@ describe("history", () => {
     expect(b.range(7, "24h", NOW)).toEqual([]);
   });
 
-  it("starts empty when the file is damaged", async () => {
+  it("reports a damaged file and refuses to overwrite it", async () => {
     const dir = await mkdtemp(path.join(os.tmpdir(), "ups-hist-"));
     dirs.push(dir);
     const { writeFile } = await import("node:fs/promises");
@@ -59,6 +118,13 @@ describe("history", () => {
     const h = new History(dir);
     await h.load();
     expect(h.range(1, "24h", NOW)).toEqual([]);
+    expect(h.error).toContain("could not be loaded");
+    h.add(7, NOW, parseNut(UPSC_ONLINE));
+    await h.flush();
+    const { readFile } = await import("node:fs/promises");
+    expect(await readFile(path.join(dir, "history.json"), "utf8")).toBe(
+      "{not json",
+    );
   });
 
   it("downsamples to the point limit", () => {

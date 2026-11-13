@@ -43,7 +43,10 @@ export interface TestServer {
   mock: MockPluginContext;
   ssh: FakeSsh;
   hostSettings: Record<string, unknown>;
-  sqlite: { prepare: (sql: string) => { all: () => unknown[] } };
+  sqlite: {
+    prepare: (sql: string) => { all: () => unknown[] };
+    exec: (sql: string) => unknown;
+  };
   request: (
     method: string,
     path: string,
@@ -60,6 +63,7 @@ export async function startServer(
     permissions?: string[];
     level?: PluginHostAccess["permissionLevel"] | "none";
     hostSettings?: Record<string, unknown>;
+    energyPayload?: string;
     exec?: (
       hostId: number,
       command: string,
@@ -72,6 +76,13 @@ export async function startServer(
   db.sqlite.exec(
     "INSERT INTO users (id) VALUES ('user-1'), ('user-2'); INSERT INTO ssh_data (id) VALUES (1), (2), (3);",
   );
+  if (options.energyPayload !== undefined) {
+    db.sqlite
+      .prepare(
+        "INSERT INTO p_ups_manager_energy_states (source_id, payload) VALUES (?, ?)",
+      )
+      .run(1, options.energyPayload);
+  }
   const mock = createMockCtx({
     pluginId: manifest.id,
     manifest,
