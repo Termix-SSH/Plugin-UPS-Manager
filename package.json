@@ -1,7 +1,7 @@
 {
   "name": "@termix-plugin/ups-manager",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0-dev.6",
   "type": "module",
   "scripts": {
     "build": "termix-plugin build",
@@ -10,6 +10,7 @@
     "validate": "termix-plugin validate",
     "migrations": "termix-plugin migrations",
     "pack": "termix-plugin pack",
+    "pack:dev": "node scripts/pack-dev.mjs",
     "sign": "termix-plugin sign",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

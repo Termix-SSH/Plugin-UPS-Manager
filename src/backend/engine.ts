@@ -1,5 +1,7 @@
 import type { PluginContext } from "@termix-ssh/plugin-sdk/backend";
-import type { Reading } from "../shared/types.js";
+import type { EnergyReport, HistoryRange, Reading } from "../shared/types.js";
+import { EnergyLedger } from "./energy-ledger.js";
+import { UpsError } from "./errors.js";
 import {
   CONDITIONS,
   UNREACHABLE_AFTER,
@@ -52,6 +54,9 @@ async function mapLimit<T>(
 export class Engine {
   private readonly states = new Map<number, SourceState>();
   private readonly running = new Set<number>();
+  private readonly queues = new Map<number, Promise<void>>();
+  private readonly sampledAt = new Map<number, number>();
+  private readonly energyErrors = new Map<number, string>();
   private stops: Array<() => void> = [];
   private disposed = false;
 
@@ -60,6 +65,7 @@ export class Engine {
     private readonly store: Store,
     private readonly remote: Remote,
     private readonly history: History,
+    private readonly energy: EnergyLedger,
   ) {}
 
   start(): void {
@@ -73,6 +79,7 @@ export class Engine {
     this.disposed = true;
     for (const stop of this.stops) stop();
     this.stops = [];
+    await Promise.all(this.queues.values());
     await this.history.flush();
   }
 
@@ -83,7 +90,53 @@ export class Engine {
   forget(sourceId: number): void {
     this.states.delete(sourceId);
     this.history.drop(sourceId);
+    this.energy.forget(sourceId);
+    this.sampledAt.delete(sourceId);
+    this.energyErrors.delete(sourceId);
     void this.ctx.kv.delete(`active:${sourceId}`).catch(() => undefined);
+  }
+
+  /** One source queue covers sampling, settings mutations and removal. */
+  async exclusive<T>(id: number, work: () => Promise<T>): Promise<T> {
+    const previous = this.queues.get(id) ?? Promise.resolve();
+    const result = previous.then(work);
+    const settled = result.then(
+      () => undefined,
+      () => undefined,
+    );
+    this.queues.set(id, settled);
+    try {
+      return await result;
+    } finally {
+      if (this.queues.get(id) === settled) this.queues.delete(id);
+    }
+  }
+
+  breakContinuity(id: number): void {
+    this.energy.break(id);
+  }
+
+  async energyReport(id: number): Promise<EnergyReport> {
+    try {
+      await this.energy.load(id);
+      this.energyErrors.delete(id);
+    } catch (error) {
+      this.energyErrors.set(id, `Energy state unavailable: ${message(error)}`);
+    }
+    return {
+      ...this.energy.report(id),
+      ...(this.energyErrors.has(id)
+        ? { persistenceError: this.energyErrors.get(id)! }
+        : {}),
+    };
+  }
+
+  async energyHistory(id: number, range: HistoryRange) {
+    const report = await this.energyReport(id);
+    return {
+      ...this.energy.history(id, range),
+      persistenceError: report.persistenceError,
+    };
   }
 
   async tick(): Promise<void> {
@@ -92,12 +145,16 @@ export class Engine {
     try {
       rows = (await this.store.all()).filter((row) => row.enabled);
     } catch (error) {
+      for (const id of this.states.keys()) this.energy.break(id);
       this.ctx.log.warn(`Could not load UPS sources: ${message(error)}`);
       return;
     }
     const ids = new Set(rows.map((row) => row.id));
     for (const id of [...this.states.keys()])
-      if (!ids.has(id)) this.states.delete(id);
+      if (!ids.has(id)) {
+        this.states.delete(id);
+        this.energy.break(id);
+      }
     await mapLimit(rows, CONCURRENCY, (row) => this.check(row));
   }
 
@@ -107,11 +164,17 @@ export class Engine {
     try {
       await this.ctx.asUser(row.userId, async () => {
         const access = await this.ctx.hosts.checkAccess(row.hostId, "connect");
-        if (!access.hasAccess) return;
-        if (!(await readHostSettings(this.ctx, row.hostId)).enabled) return;
-        await this.refresh(row);
+        if (
+          !access.hasAccess ||
+          !(await readHostSettings(this.ctx, row.hostId)).enabled
+        ) {
+          this.energy.break(row.id);
+          return;
+        }
+        await this.refresh(row, true);
       });
     } catch (error) {
+      this.energy.break(row.id);
       this.ctx.log.debug(`UPS check failed for ${row.id}: ${message(error)}`);
     } finally {
       this.running.delete(row.id);
@@ -119,7 +182,26 @@ export class Engine {
   }
 
   /** Reads one source now, as whoever is acting, and records the result. */
-  async refresh(row: SourceRow): Promise<SourceState> {
+  async refresh(row: SourceRow, canonical = false): Promise<SourceState> {
+    return this.exclusive(row.id, async () => {
+      const current = await this.store.get(row.id);
+      if (!current) throw new UpsError("UPS not found", 404);
+      if (!current.enabled) {
+        this.energy.break(current.id);
+        return this.load(current);
+      }
+      const now = performance.now();
+      const last = this.sampledAt.get(current.id);
+      // Repeated scheduled calls cannot create extra history/energy observations.
+      if (canonical && last !== undefined && now - last < TICK_MS - 5_000) {
+        return this.load(current);
+      }
+      if (canonical) this.sampledAt.set(current.id, now);
+      return this.read(current, canonical);
+    });
+  }
+
+  private async read(row: SourceRow, canonical: boolean): Promise<SourceState> {
     let reading: Reading | null = null;
     let error = "";
     try {
@@ -131,7 +213,19 @@ export class Engine {
     } catch (e) {
       error = message(e);
     }
-    return this.apply(row, reading, error);
+    if (!reading) this.energy.break(row.id);
+    if (canonical && reading) {
+      try {
+        await this.energy.sample(row, reading, Date.now() / 1000);
+      } catch (e) {
+        this.energyErrors.set(row.id, `Energy tracking failed: ${message(e)}`);
+        this.ctx.log.warn(
+          `Energy sampling failed for ${row.id}: ${message(e)}`,
+        );
+      }
+      this.history.add(row.id, Math.floor(Date.now() / 1000), reading);
+    }
+    return this.apply(row, reading, error, canonical);
   }
 
   private async load(row: SourceRow): Promise<SourceState> {
@@ -161,6 +255,7 @@ export class Engine {
     row: SourceRow,
     reading: Reading | null,
     error: string,
+    canonical: boolean,
   ): Promise<SourceState> {
     const state = await this.load(row);
     const before = new Set(state.active);
@@ -171,7 +266,6 @@ export class Engine {
       state.error = "";
       state.misses = 0;
       state.readAt = now;
-      this.history.add(row.id, Math.floor(now / 1000), reading);
       after = conditionsOf(reading, row);
       if (
         reading.lastTest &&
@@ -187,7 +281,7 @@ export class Engine {
       state.lastTest = reading.lastTest;
     } else {
       state.error = error;
-      state.misses += 1;
+      if (canonical) state.misses += 1;
       after = new Set(before);
       if (state.misses >= UNREACHABLE_AFTER) after.add("unreachable");
     }
