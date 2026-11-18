@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.0.1
+
+### Added
+
+- Live NUT currents, real power and, when turned on, calculated DC power
+- Battery and driver details, and a searchable list of every NUT value
+- Output energy used, in Wh and kWh, with charts for 24 hours, 7 days and 30 days
+- UPS load estimated from output watts and the UPS's real power rating when the device doesn't report it
+- Overview refresh from 1 to 30 seconds
+
+### Changed
+
+- Runs in its own process on Termix 26.11.2 and later, with no access to the server beyond what Termix allows it
+- Its process stops when it has nothing to watch or run, and Termix starts it again when there is work, which saves memory on Termix 26.11.2 and later
+
+### Fixed
+
+- Source editor Test button now matches the Save button size
+
 ## 1.0.0
 
 ### Added

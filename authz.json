@@ -107,6 +107,17 @@
         "id": "ups-manager.source"
       }
     },
+    "GET /plugin-api/ups-manager/:hostId/sources/:id/energy": {
+      "access": "user",
+      "permission": "ups-manager.use",
+      "resource": {
+        "kind": "host",
+        "min": "connect"
+      },
+      "params": {
+        "id": "ups-manager.source"
+      }
+    },
     "GET /plugin-api/ups-manager/:hostId/sources/:id/status": {
       "access": "user",
       "permission": "ups-manager.use",

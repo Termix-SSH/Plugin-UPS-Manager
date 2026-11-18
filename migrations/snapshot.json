@@ -62,6 +62,16 @@
           "notNull": true,
           "defaultValue": true
         },
+        "inputDc": {
+          "type": "boolean",
+          "notNull": true,
+          "defaultValue": false
+        },
+        "outputDc": {
+          "type": "boolean",
+          "notNull": true,
+          "defaultValue": false
+        },
         "createdAt": {
           "type": "timestamp",
           "notNull": true,
@@ -112,6 +122,20 @@
           ]
         }
       ]
+    },
+    "energy_states": {
+      "columns": {
+        "sourceId": {
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "payload": {
+          "type": "text",
+          "notNull": true
+        }
+      },
+      "indexes": []
     }
   }
 }
